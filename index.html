@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LiveStock IQ — Smart Cattle Health Monitor</title>
+  <meta name="description" content="AI-powered wearable sensor monitoring for cattle — track temperature, activity, and feeding patterns. Detect illness and estrus in real-time." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Splash Screen -->
+  <div id="splash-screen" class="splash-screen">
+    <div class="splash-content">
+      <div class="splash-logo">
+        <div class="logo-icon">🐄</div>
+        <h1>LiveStock <span>IQ</span></h1>
+      </div>
+      <p>Smart Cattle Health Monitor</p>
+      <div class="splash-loader">
+        <div class="loader-bar"></div>
+      </div>
+      <span class="loading-text">Connecting to sensors...</span>
+    </div>
+  </div>
+
+  <!-- App Shell -->
+  <div id="app" class="app hidden">
+    <!-- Top Status Bar -->
+    <div class="status-bar">
+      <span id="clock">21:49</span>
+      <div class="status-icons">
+        <span class="signal-icon">📶</span>
+        <span class="battery-icon">🔋</span>
+      </div>
+    </div>
+
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-left">
+        <div class="header-logo">🐄</div>
+        <div>
+          <h1 class="app-title">LiveStock IQ</h1>
+          <p class="farm-name">🌾 Green Valley Farm</p>
+        </div>
+      </div>
+      <div class="header-right">
+        <button class="theme-toggle-btn" id="theme-toggle" onclick="toggleTheme()" title="Toggle dark/light mode">🌙</button>
+        <button class="notif-btn" id="notif-btn" onclick="openAlerts()">
+          <span>🔔</span>
+          <span class="badge" id="alert-badge">3</span>
+        </button>
+        <button class="avatar-btn" onclick="openSettings()">👤</button>
+      </div>
+    </header>
+
+    <!-- Pages -->
+    <main class="main-content">
+
+      <!-- ===================== DASHBOARD PAGE ===================== -->
+      <section class="page active" id="page-dashboard">
+        <!-- Farm Summary Cards -->
+        <div class="summary-strip">
+          <div class="summary-card green">
+            <span class="s-icon">✅</span>
+            <div>
+              <p class="s-value" id="healthy-count">18</p>
+              <p class="s-label">Healthy</p>
+            </div>
+          </div>
+          <div class="summary-card orange">
+            <span class="s-icon">⚠️</span>
+            <div>
+              <p class="s-value" id="alert-count">3</p>
+              <p class="s-label">Alerts</p>
+            </div>
+          </div>
+          <div class="summary-card purple">
+            <span class="s-icon">💜</span>
+            <div>
+              <p class="s-value" id="estrus-count">2</p>
+              <p class="s-label">Estrus</p>
+            </div>
+          </div>
+          <div class="summary-card blue">
+            <span class="s-icon">🐄</span>
+            <div>
+              <p class="s-value">23</p>
+              <p class="s-label">Total</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Farm Overview -->
+        <div class="section-title">
+          <h2>Live Farm Overview</h2>
+          <span class="live-dot"><span class="pulse"></span>LIVE</span>
+        </div>
+
+        <!-- Weather Banner -->
+        <div class="weather-banner">
+          <div class="weather-left">
+            <span class="weather-icon">☀️</span>
+            <div>
+              <p class="weather-temp">32°C</p>
+              <p class="weather-label">Ambient Temperature</p>
+            </div>
+          </div>
+          <div class="weather-right">
+            <div class="weather-stat">💧 65% Humidity</div>
+            <div class="weather-stat">🌬️ 12 km/h Wind</div>
+          </div>
+        </div>
+
+        <!-- Active Alerts -->
+        <div class="section-title">
+          <h2>🚨 Active Alerts</h2>
+          <button class="see-all" onclick="goToPage('alerts')">See all</button>
+        </div>
+        <div id="active-alerts-list" class="alerts-list"></div>
+
+        <!-- Charts Area -->
+        <div class="section-title">
+          <h2>📊 Herd Vitals (24h)</h2>
+        </div>
+        <div class="chart-tabs">
+          <button class="chart-tab active" onclick="switchChart('temperature', this)">🌡️ Temp</button>
+          <button class="chart-tab" onclick="switchChart('activity', this)">🏃 Activity</button>
+          <button class="chart-tab" onclick="switchChart('feeding', this)">🌿 Feeding</button>
+        </div>
+        <canvas id="herd-chart" class="herd-chart"></canvas>
+
+        <!-- Cattle Grid -->
+        <div class="section-title">
+          <h2>🐄 Cattle Status</h2>
+          <button class="see-all" onclick="goToPage('cattle')">View all</button>
+        </div>
+        <div id="cattle-grid" class="cattle-grid"></div>
+
+      </section>
+
+      <!-- ===================== CATTLE LIST PAGE ===================== -->
+      <section class="page" id="page-cattle">
+        <div class="page-header">
+          <h2>🐄 All Cattle</h2>
+          <div class="search-bar">
+            <span>🔍</span>
+            <input type="text" placeholder="Search by ID or name..." id="search-input" oninput="filterCattle()" />
+          </div>
+        </div>
+        <div class="filter-chips">
+          <button class="chip active" onclick="filterByStatus('all', this)">All</button>
+          <button class="chip" onclick="filterByStatus('healthy', this)">✅ Healthy</button>
+          <button class="chip" onclick="filterByStatus('sick', this)">🤒 Sick</button>
+          <button class="chip" onclick="filterByStatus('estrus', this)">💜 Estrus</button>
+          <button class="chip" onclick="filterByStatus('fever', this)">🔥 Fever</button>
+        </div>
+        <div id="full-cattle-list" class="full-cattle-list"></div>
+      </section>
+
+      <!-- ===================== ALERTS PAGE ===================== -->
+      <section class="page" id="page-alerts">
+        <div class="page-header">
+          <h2>🔔 Alerts & Notifications</h2>
+        </div>
+        <div class="alert-filters">
+          <button class="chip active" onclick="filterAlerts('all', this)">All</button>
+          <button class="chip" onclick="filterAlerts('critical', this)">🔴 Critical</button>
+          <button class="chip" onclick="filterAlerts('warning', this)">🟠 Warning</button>
+          <button class="chip" onclick="filterAlerts('info', this)">🔵 Info</button>
+        </div>
+        <div id="full-alerts-list" class="full-alerts-list"></div>
+      </section>
+
+      <!-- ===================== ANALYTICS PAGE ===================== -->
+      <section class="page" id="page-analytics">
+        <div class="page-header">
+          <h2>📈 Analytics</h2>
+        </div>
+        <div class="analytics-grid">
+          <div class="analytic-card">
+            <p class="ac-title">Avg Temperature</p>
+            <p class="ac-value" id="avg-temp">38.5°C</p>
+            <p class="ac-trend positive">▲ 0.2°C from yesterday</p>
+          </div>
+          <div class="analytic-card">
+            <p class="ac-title">Avg Activity</p>
+            <p class="ac-value" id="avg-activity">74%</p>
+            <p class="ac-trend negative">▼ 5% from yesterday</p>
+          </div>
+          <div class="analytic-card">
+            <p class="ac-title">Feed Consumption</p>
+            <p class="ac-value" id="avg-feed">82%</p>
+            <p class="ac-trend positive">▲ 3% from yesterday</p>
+          </div>
+          <div class="analytic-card">
+            <p class="ac-title">Health Score</p>
+            <p class="ac-value" id="health-score">87/100</p>
+            <p class="ac-trend positive">▲ 2pts from last week</p>
+          </div>
+        </div>
+
+        <div class="section-title"><h2>Weekly Health Trend</h2></div>
+        <canvas id="weekly-chart" class="herd-chart"></canvas>
+
+        <div class="section-title"><h2>Alert Distribution</h2></div>
+        <canvas id="donut-chart" style="max-height:220px;"></canvas>
+
+        <div class="section-title"><h2>Most Common Issues</h2></div>
+        <div class="issues-list">
+          <div class="issue-row">
+            <span>🌡️ Fever</span>
+            <div class="issue-bar-wrap"><div class="issue-bar" style="width:70%;background:var(--danger)"></div></div>
+            <span>70%</span>
+          </div>
+          <div class="issue-row">
+            <span>😴 Low Activity</span>
+            <div class="issue-bar-wrap"><div class="issue-bar" style="width:55%;background:var(--warning)"></div></div>
+            <span>55%</span>
+          </div>
+          <div class="issue-row">
+            <span>🌿 Poor Feeding</span>
+            <div class="issue-bar-wrap"><div class="issue-bar" style="width:40%;background:var(--info)"></div></div>
+            <span>40%</span>
+          </div>
+          <div class="issue-row">
+            <span>💜 Estrus</span>
+            <div class="issue-bar-wrap"><div class="issue-bar" style="width:25%;background:var(--purple)"></div></div>
+            <span>25%</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== COMMUNITY PAGE ===================== -->
+      <section class="page" id="page-community">
+        <div class="page-header">
+          <h2>🤝 Community</h2>
+        </div>
+
+        <!-- Community Tabs -->
+        <div class="filter-tabs">
+          <button class="filter-tab active" onclick="switchCommunityTab('feed', this)">📰 Feed</button>
+          <button class="filter-tab" onclick="switchCommunityTab('farmers', this)">👨‍🌾 Farmers</button>
+          <button class="filter-tab" onclick="switchCommunityTab('connections', this)">🔗 Connections</button>
+        </div>
+
+        <!-- Feed Tab -->
+        <div id="community-feed-tab" class="community-container"></div>
+
+        <!-- Farmers Tab -->
+        <div id="community-farmers-tab" class="community-container hidden">
+          <div class="community-search">
+            <input type="text" id="farmer-search" placeholder="Search farmers..." oninput="searchFarmers()" />
+          </div>
+          <div id="farmers-list"></div>
+        </div>
+
+        <!-- Connections Tab -->
+        <div id="community-connections-tab" class="community-container hidden">
+          <div id="connections-list"></div>
+        </div>
+      </section>
+
+      <!-- ===================== SETTINGS PAGE ===================== -->
+      <section class="page" id="page-settings">
+        <div class="page-header">
+          <h2>⚙️ Settings</h2>
+        </div>
+
+        <div class="settings-section">
+          <p class="settings-group-title">Farm Info</p>
+          <div class="settings-row">
+            <span>🌾 Farm Name</span>
+            <span class="settings-value">Green Valley Farm</span>
+          </div>
+          <div class="settings-row">
+            <span>👤 Farmer</span>
+            <span class="settings-value">Rajesh Kumar</span>
+          </div>
+          <div class="settings-row">
+            <span>📍 Location</span>
+            <span class="settings-value">Haryana, India</span>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <p class="settings-group-title">Alert Thresholds</p>
+          <div class="settings-row">
+            <span>🌡️ High Temp Alert</span>
+            <div class="threshold-ctrl">
+              <button onclick="adjustThreshold('highTemp', -0.5)">−</button>
+              <span id="highTemp-val">39.5°C</span>
+              <button onclick="adjustThreshold('highTemp', 0.5)">+</button>
+            </div>
+          </div>
+          <div class="settings-row">
+            <span>❄️ Low Temp Alert</span>
+            <div class="threshold-ctrl">
+              <button onclick="adjustThreshold('lowTemp', -0.5)">−</button>
+              <span id="lowTemp-val">37.5°C</span>
+              <button onclick="adjustThreshold('lowTemp', 0.5)">+</button>
+            </div>
+          </div>
+          <div class="settings-row">
+            <span>🏃 Min Activity</span>
+            <div class="threshold-ctrl">
+              <button onclick="adjustThreshold('minActivity', -5)">−</button>
+              <span id="minActivity-val">30%</span>
+              <button onclick="adjustThreshold('minActivity', 5)">+</button>
+            </div>
+          </div>
+          <div class="settings-row">
+            <span>🌿 Min Feeding</span>
+            <div class="threshold-ctrl">
+              <button onclick="adjustThreshold('minFeeding', -5)">−</button>
+              <span id="minFeeding-val">40%</span>
+              <button onclick="adjustThreshold('minFeeding', 5)">+</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <p class="settings-group-title">Notifications</p>
+          <div class="settings-row">
+            <span>🔔 Push Notifications</span>
+            <label class="toggle"><input type="checkbox" checked id="toggle-push"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="settings-row">
+            <span>📲 SMS Alerts</span>
+            <label class="toggle"><input type="checkbox" id="toggle-sms"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="settings-row">
+            <span>📧 Email Reports</span>
+            <label class="toggle"><input type="checkbox" checked id="toggle-email"><span class="toggle-slider"></span></label>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <p class="settings-group-title">Sensor Settings</p>
+          <div class="settings-row">
+            <span>⏱️ Refresh Rate</span>
+            <select class="settings-select" id="refresh-rate">
+              <option value="5">Every 5 seconds</option>
+              <option value="10" selected>Every 10 seconds</option>
+              <option value="30">Every 30 seconds</option>
+            </select>
+          </div>
+          <div class="settings-row">
+            <span>📡 Auto Simulation</span>
+            <label class="toggle"><input type="checkbox" checked id="toggle-sim" onchange="toggleSimulation()"><span class="toggle-slider"></span></label>
+          </div>
+        </div>
+
+        <div class="app-version">LiveStock IQ v2.4.1 — Built for Hackathon 2026 🏆</div>
+      </section>
+
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+      <button class="nav-btn active" id="nav-dashboard" onclick="goToPage('dashboard')">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">Dashboard</span>
+      </button>
+      <button class="nav-btn" id="nav-cattle" onclick="goToPage('cattle')">
+        <span class="nav-icon">🐄</span>
+        <span class="nav-label">Cattle</span>
+      </button>
+      <button class="nav-btn" id="nav-community" onclick="goToPage('community')">
+        <span class="nav-icon">🤝</span>
+        <span class="nav-label">Community</span>
+      </button>
+      <button class="nav-btn" id="nav-analytics" onclick="goToPage('analytics')">
+        <span class="nav-icon">📊</span>
+        <span class="nav-label">Analytics</span>
+      </button>
+      <button class="nav-btn" id="nav-settings" onclick="goToPage('settings')">
+        <span class="nav-icon">⚙️</span>
+        <span class="nav-label">Settings</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- Cattle Detail Modal -->
+  <div id="cattle-modal" class="modal-overlay hidden" onclick="closeModal(event)">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeCattleModal()">✕</button>
+      <div id="modal-content"></div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
